@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+artifacts/
+*.safetensors
+*.bin
+*.pt
+!results/function_vector.pt
+.venv/
+.env
+wandb/

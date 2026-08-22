@@ -1,0 +1,26 @@
+# Core
+# Pinned to the exact versions verified working end-to-end on Kaggle T4
+# through Session A (SFT+DARE) and Session B (harmful+RESTA), 2026-08-22.
+# Bump deliberately, not via -U — see KAGGLE_RUNBOOK.md changelog.
+torch>=2.1.0
+transformers==5.15.1
+accelerate==1.14.0
+peft==0.20.0
+datasets==5.0.1
+torchao==0.16.0        # peft>=0.12 hard-requires this even if unused for quantization
+safetensors>=0.4.3
+sentencepiece>=0.2.0
+# mergekit intentionally omitted: disabled all session via use_mergekit=False
+# (dependency-resolver conflicts with dask-cuda/numba on Kaggle's image; the
+# reference state-dict implementations in dare.py/resta.py are what's actually
+# used and are covered by tests/test_math.py)
+# Metrics
+rouge-score>=0.1.2
+sacrebleu>=2.4.0
+nltk>=3.8.1
+# Utils
+numpy>=1.26.0
+pandas>=2.0.0
+matplotlib>=3.8.0
+pyyaml>=6.0
+tqdm>=4.66.0

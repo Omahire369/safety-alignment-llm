@@ -1,0 +1,44 @@
+# Reference copy of the defaults in src/safealign/config.py.
+# Every key is overridable via the matching environment variable (in brackets).
+model:
+  base_model: Qwen/Qwen2.5-1.5B-Instruct     # [BASE_MODEL]
+  judge_model: Qwen/Qwen2.5-7B-Instruct      # [JUDGE_MODEL]  (meta-llama/Llama-2-7b-chat-hf if granted)
+  dtype: float16                             # [DTYPE]  T4 is Turing: fp16 only, never bf16
+  max_seq_len: 1024                          # [MAX_SEQ_LEN]
+
+lora:
+  r: 16                                      # [LORA_R]
+  alpha: 32                                  # [LORA_ALPHA]
+  dropout: 0.05                              # [LORA_DROPOUT]
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+train:
+  lr: 2.0e-4                                 # [LR]
+  batch_size: 2                              # [BATCH_SIZE]   effective batch = 16
+  grad_accum: 8                              # [GRAD_ACCUM]
+  epochs: 1.0                                # [EPOCHS]
+  harmful_lr: 1.0e-4                         # [HARMFUL_LR]
+  harmful_epochs: 3.0                        # [HARMFUL_EPOCHS]  541 rows needs more passes
+  seed: 42                                   # [SEED]
+
+dare:
+  drop_rates: [0.1, 0.3, 0.5, 0.7]           # density = 1 - p in mergekit
+  chosen_p: 0.5                              # [DARE_P]  overwritten by the sweep
+
+resta:
+  lambda: 1.0                                # [RESTA_LAMBDA]  scale on delta_safe
+
+fv:
+  n_icl: 10                                  # [FV_N_ICL]      in-context examples per prompt
+  n_prompts: 15                              # [FV_N_PROMPTS]  clean/corrupted pairs
+  top_k_heads: 10                            # [FV_TOP_K]
+  head_batch_size: 8                         # [FV_HEAD_BATCH] heads patched per forward pass
+  lambdas: [0.5, 1.0, 1.5, 2.0]
+  chosen_lambda: 1.0                         # [FV_LAMBDA]
+  inject_layer_frac: 0.3333                  # floor(L/3) -> layer 9 of 28
+
+eval:
+  n_utility: 300                             # [N_UTILITY]  subsample of the 20% test split
+  max_new_tokens: 256                        # [MAX_NEW_TOKENS]
+  gen_batch_size: 8                          # [GEN_BATCH]
+  judge_batch_size: 4                        # [JUDGE_BATCH]
