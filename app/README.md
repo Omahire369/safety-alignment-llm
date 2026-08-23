@@ -13,7 +13,7 @@ short_description: Steer refusal behaviour with a Function Vector, live
 
 # Safety Alignment in LLMs — Parameter-Space vs Activation-Space Interventions
 
-Live demo for [safety-alignment-llm](https://github.com/<your-username>/safety-alignment-llm).
+Live demo for [safety-alignment-llm](https://github.com/Omahire369/safety-alignment-llm).
 
 **Tabs**
 - *Steer it live* — one prompt, two greedy generations: untouched vs Function Vector injected
