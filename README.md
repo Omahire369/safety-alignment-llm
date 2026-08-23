@@ -26,6 +26,64 @@ benchmark, and the same utility split, so the trade-off between them is directly
 Seven configurations are evaluated end to end: base, SFT, SFT+DARE, SFT+RESTA,
 SFT+DARE+RESTA, SFT+FV, SFT+DARE+FV.
 
+## Pipeline
+
+```mermaid
+flowchart TD
+    BASE(["θ_base<br/>Qwen2.5-1.5B-Instruct"])
+
+    BASE --> SFT["LoRA SFT<br/>medical_meadow_medqa"]
+    BASE --> HARM["LoRA SFT<br/>toxic-dpo (harmful)"]
+
+    SFT --> TSFT(["θ_SFT"])
+    HARM --> THARM(["θ_harmful"])
+
+    TSFT --> DARE["DARE<br/>sparsify + rescale Δ"]
+    DARE --> TDARE(["θ_SFT + DARE"])
+
+    BASE --> SAFEVEC["δ_safe = θ_base − θ_harmful"]
+    THARM --> SAFEVEC
+
+    TSFT --> RESTA1["+ δ_safe"]
+    SAFEVEC --> RESTA1
+    RESTA1 --> TRESTA(["θ_SFT + RESTA"])
+
+    TDARE --> RESTA2["+ δ_safe"]
+    SAFEVEC --> RESTA2
+    RESTA2 --> TDR(["θ_SFT + DARE + RESTA"])
+
+    BASE --> CMA["causal mediation analysis<br/>336 heads × 15 prompts"]
+    CMA --> FV["Function Vector<br/>top-10 heads, layer ⌊L/3⌋"]
+
+    TSFT -.->|"λ·FV, inference only"| TFV(["θ_SFT + FV"])
+    TDARE -.->|"λ·FV, inference only"| TDFV(["θ_SFT + DARE + FV"])
+    FV -.-> TFV
+    FV -.-> TDFV
+
+    BASE --> EVAL
+    TSFT --> EVAL
+    TDARE --> EVAL
+    TRESTA --> EVAL
+    TDR --> EVAL
+    TFV --> EVAL
+    TDFV --> EVAL
+
+    EVAL["evaluate all 7 configs<br/>550 HarmEval → LLM judge<br/>held-out medQA → ROUGE-L / METEOR / BLEU"]
+    EVAL --> RESULTS["results + report<br/>RESTA: Pareto-dominant · FV: weak transfer to benchmark"]
+
+    classDef weightspace fill:#0F6E63,stroke:#0F6E63,color:#ffffff
+    classDef activationspace fill:#2F6FB2,stroke:#2F6FB2,color:#ffffff
+    classDef neutral fill:#374151,stroke:#374151,color:#ffffff
+
+    class DARE,SAFEVEC,RESTA1,RESTA2,TRESTA,TDR,TDARE weightspace
+    class CMA,FV,TFV,TDFV activationspace
+    class BASE,SFT,HARM,TSFT,THARM,EVAL,RESULTS neutral
+```
+
+<sub>Teal = parameter-space (permanent weight edit). Blue = activation-space (dashed — applied
+per-request at inference, no weight ever changes). Grey = data/model states shared by both
+families.</sub>
+
 ## Results
 
 *Unsafe Score* = fraction of 550 HarmEval responses an LLM judge (Qwen2.5-7B-Instruct)
