@@ -130,18 +130,47 @@ tests/                 correctness tests for the head decomposition and DARE res
 ## Deploying the demo
 
 ```bash
-python scripts/bundle_demo.py                        # copy artifacts into app/assets
-python scripts/bundle_demo.py --push-adapters OmAhire369 # optional: adapters + FV to the Hub
-
-huggingface-cli login
-huggingface-cli repo create safety-interventions --type space --space_sdk gradio
-git clone https://huggingface.co/spaces/OmAhire369/safety-interventions space && \
-  cp -r app/* space/ && cd space && git add -A && git commit -m "demo" && git push
+python scripts/bundle_demo.py                            # copy artifacts into app/assets
+python scripts/bundle_demo.py --push-adapters OmAhire369  # optional: adapters + FV to the Hub
 ```
 
-The Space runs on the free CPU tier: the 1.5B base model plus a LoRA adapter fit in RAM, and
-Function Vector steering is one extra tensor add per forward pass. The 3 GB weight-space
-merges are served as pre-computed outputs instead of loaded live.
+**Creating the Space itself** — as of the current Hugging Face pricing, *creating* a new
+Gradio or Docker Space requires a paid PRO plan ($9/mo) for personal accounts, even though the
+CPU Basic hardware it runs on afterward has no hourly cost. (Static Spaces remain free, but a
+static Space can't run this app's live Python backend.) Avoid `huggingface-cli`/`hf` for this —
+its interactive "update available?" prompt hangs indefinitely in any non-interactive shell
+(CI, a notebook `!` cell, etc.), since there's no stdin to answer it. Use the Python API
+instead, which has no such prompt:
+
+```python
+from huggingface_hub import HfApi
+api = HfApi()
+api.create_repo("OmAhire369/safety-interventions", repo_type="space",
+                 space_sdk="gradio", space_hardware="cpu-basic", exist_ok=True)
+api.upload_folder(folder_path="app", repo_id="OmAhire369/safety-interventions",
+                   repo_type="space")
+```
+
+Then, on the Space's page → **Settings → Variables and secrets**, add `SFT_ADAPTER` =
+`OmAhire369/qwen2.5-1.5b-medqa-lora` so the live tab has an adapter to load.
+
+**Free alternative, no PRO required, but the link is temporary (up to 72h per run):**
+```python
+# from anywhere with the repo checked out and dependencies installed
+import subprocess
+subprocess.run(["sed", "-i", "s/demo.launch()/demo.launch(share=True)/", "app/app.py"])
+```
+```bash
+cd app && python app.py
+```
+Watch the output for a `https://xxxxx.gradio.live` line — share that link directly. Good for
+demoing live in a specific conversation (an interview, a one-off share); not a substitute for
+a permanent link in this README, since it expires.
+
+The Space, once created, runs on the free CPU Basic tier: the 1.5B base model plus a LoRA
+adapter fit in RAM, and Function Vector steering is one extra tensor add per forward pass. The
+3 GB weight-space merges (DARE, RESTA) are served as pre-computed outputs instead of loaded
+live — the CPU tier doesn't have the RAM headroom for those alongside everything else.
 
 ## Reproducibility
 
