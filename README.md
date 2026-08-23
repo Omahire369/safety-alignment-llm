@@ -217,7 +217,7 @@ Kaggle specifically — this project's documented hardware — `/kaggle/working`
 a session restart, so start from a fresh clone rather than assuming the repo is already
 checked out:
 ```python
-!git clone https://github.com/<user>/safety-alignment-llm.git /kaggle/working/safety-alignment-llm
+!git clone https://github.com/Omahire369/safety-alignment-llm.git /kaggle/working/safety-alignment-llm
 ```
 ```python
 import os
