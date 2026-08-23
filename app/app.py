@@ -81,11 +81,13 @@ def _load():
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    dtype = torch.float16 if device == "cuda" else torch.float32
     tok = AutoTokenizer.from_pretrained(BASE_MODEL)
     if tok.pad_token is None:
         tok.pad_token = tok.eos_token
-    model = AutoModelForCausalLM.from_pretrained(BASE_MODEL, torch_dtype=torch.float32,
-                                                 low_cpu_mem_usage=True)
+    model = AutoModelForCausalLM.from_pretrained(BASE_MODEL, torch_dtype=dtype,
+                                                 low_cpu_mem_usage=True).to(device)
     if SFT_ADAPTER:
         try:
             from peft import PeftModel
@@ -112,6 +114,11 @@ def _generate(prompt: str, lam: float, max_new_tokens: int):
     msgs = [{"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": prompt}]
     ids = tok.apply_chat_template(msgs, return_tensors="pt", add_generation_prompt=True)
+    if hasattr(ids, "input_ids"):
+        ids = ids.input_ids
+    elif hasattr(ids, "keys"):
+        ids = ids["input_ids"]
+    ids = ids.to(next(model.parameters()).device)
 
     handle = None
     if fv is not None and lam != 0:
