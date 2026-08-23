@@ -212,18 +212,29 @@ api.upload_folder(folder_path="app", repo_id="OmAhire369/safety-interventions",
 Then, on the Space's page → **Settings → Variables and secrets**, add `SFT_ADAPTER` =
 `OmAhire369/qwen2.5-1.5b-medqa-lora` so the live tab has an adapter to load.
 
-**Free alternative, no PRO required, but the link is temporary (up to 72h per run):**
+**Free alternative, no PRO required, but the link is temporary (up to 72h per run).** On
+Kaggle specifically — this project's documented hardware — `/kaggle/working` does not survive
+a session restart, so start from a fresh clone rather than assuming the repo is already
+checked out:
 ```python
-# from anywhere with the repo checked out and dependencies installed
-import subprocess
-subprocess.run(["sed", "-i", "s/demo.launch()/demo.launch(share=True)/", "app/app.py"])
+!git clone https://github.com/<user>/safety-alignment-llm.git /kaggle/working/safety-alignment-llm
 ```
-```bash
-cd app && python app.py
+```python
+import os
+os.environ["SFT_ADAPTER"] = "OmAhire369/qwen2.5-1.5b-medqa-lora"  # without this, the demo
+                                                                   # runs the bare base model
+
+p = "/kaggle/working/safety-alignment-llm/app/app.py"
+text = open(p).read().replace("demo.launch()", "demo.launch(share=True)")
+open(p, "w").write(text)
+
+!cd /kaggle/working/safety-alignment-llm/app && python app.py
 ```
 Watch the output for a `https://xxxxx.gradio.live` line — share that link directly. Good for
 demoing live in a specific conversation (an interview, a one-off share); not a substitute for
-a permanent link in this README, since it expires.
+a permanent link in this README, since it expires. Running this outside Kaggle (any machine
+with the repo already cloned and `requirements.txt`/`app/requirements.txt` installed) skips the
+`git clone` step — everything else is identical.
 
 The Space, once created, runs on the free CPU Basic tier: the 1.5B base model plus a LoRA
 adapter fit in RAM, and Function Vector steering is one extra tensor add per forward pass. The
